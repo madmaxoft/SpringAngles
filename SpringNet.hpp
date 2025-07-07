@@ -58,6 +58,8 @@ public:
 
 	const Point & point1() const;
 	const Point & point2() const;
+	double idealLength() const { return mIdealLength; }
+	double force() const { return mForce; }
 
 	/** Returns the length, projected from a sloped measurement onto a flat floor. */
 	static double projectLengthToFloor(double aLength, double aHeightDifference);

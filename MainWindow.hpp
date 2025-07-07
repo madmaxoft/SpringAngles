@@ -3,6 +3,7 @@
 #include "Document.hpp"
 #include <QMainWindow>
 #include <QGraphicsScene>
+#include <QGraphicsLineItem>
 
 
 
@@ -17,6 +18,37 @@ QT_END_NAMESPACE
 
 
 
+/** QGraphicsItem descendant that is used for drawing springs. */
+class GraphicsSpringItem:
+	public QGraphicsLineItem
+{
+	/** The length to be displayed in the middle of the line. */
+	double mLength;
+
+	using Super = QGraphicsLineItem;
+
+
+public:
+	explicit GraphicsSpringItem(double aX1, double aY1, double aX2, double aY2, double aLength):
+		Super(aX1, aY1, aX2, aY2),
+		mLength(aLength)
+	{
+	}
+
+	void setLength(double aLength) { mLength = aLength; update(); }
+
+	void paint(
+		QPainter * aPainter,
+		const QStyleOptionGraphicsItem * aOption,
+		QWidget * widget = nullptr
+	) override;
+};
+
+
+
+
+
+/** The main window of the application. */
 class MainWindow:
 	public QMainWindow
 {
@@ -55,6 +87,9 @@ private:
 	/** The scene pos in gvMain where the last mouse-down has occurred. */
 	QPointF mMouseDownPos;
 
+	/** The line used to show newly created spring. */
+	GraphicsSpringItem * mNewSpringLine;
+
 
 	/** Connects the actions to their slots in this form. */
 	void connectActions();
@@ -74,6 +109,7 @@ private:
 	void zoomOut();
 	void zoomAll();
 
+	void gvMouseMoved(QPointF aScenePos);
 	void gvMousePressed(QPointF aScenePos, Qt::MouseButton aButton);
 	void gvMouseReleased(QPointF aScenePos, Qt::MouseButton aButton);
 
