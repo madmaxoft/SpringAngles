@@ -36,7 +36,7 @@ class SpringParamsDlg:
 public:
 
 	/** Shows the dialog and returns thevalues the user provides. */
-	static std::optional<SpringParams> ask(QWidget * aParent, bool aIsFixedLength, double aLength);
+	static std::optional<SpringParams> ask(QWidget * aParent, double aLength);
 
 
 private:
@@ -45,7 +45,7 @@ private:
 	std::unique_ptr<Ui::SpringParamsDlg> mUI;
 
 
-	explicit SpringParamsDlg(QWidget * aParent, bool aIsFixedLength, double aLength);
+	explicit SpringParamsDlg(QWidget * aParent, double aLength);
 	~SpringParamsDlg();
 
 	double length() const;

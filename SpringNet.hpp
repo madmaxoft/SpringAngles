@@ -31,6 +31,12 @@ public:
 	double x() const { return mX; }
 	double y() const { return mY; }
 	bool isFixed() const { return mIsFixed; }
+
+	void set(double aX, double aY)
+	{
+		mX = aX;
+		mY = aY;
+	}
 };
 
 
@@ -56,10 +62,19 @@ public:
 	{
 	}
 
+	size_t pointIdx1() const { return mPointIdx1; }
+	size_t pointIdx2() const { return mPointIdx2; }
 	const Point & point1() const;
 	const Point & point2() const;
 	double idealLength() const { return mIdealLength; }
 	double force() const { return mForce; }
+	double currentLength() const;
+	double diffX() const;
+	double diffY() const;
+
+	/** Returns the other point than the specified one.
+	UB if aPointIdx is neither mPointIdx1 nor mPointIdx2. */
+	const Point & otherPoint(size_t aPointIdx) const;
 
 	/** Returns the length, projected from a sloped measurement onto a flat floor. */
 	static double projectLengthToFloor(double aLength, double aHeightDifference);
@@ -101,4 +116,7 @@ public:
 	/** Returns the index of the point nearest to the specified coords.
 	Throws a std::runtime_error if there are no points in the network. */
 	size_t nearestSpringIdx(double aX, double aY);
+
+	/** Performs one round of spring-based point position adjustment. */
+	void adjust();
 };

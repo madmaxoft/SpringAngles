@@ -22,8 +22,8 @@ QT_END_NAMESPACE
 class GraphicsSpringItem:
 	public QGraphicsLineItem
 {
-	/** The length to be displayed in the middle of the line. */
-	double mLength;
+	/** The ideal length, to be displayed in the middle of the line. */
+	double mIdealLength;
 
 	using Super = QGraphicsLineItem;
 
@@ -31,11 +31,11 @@ class GraphicsSpringItem:
 public:
 	explicit GraphicsSpringItem(double aX1, double aY1, double aX2, double aY2, double aLength):
 		Super(aX1, aY1, aX2, aY2),
-		mLength(aLength)
+		mIdealLength(aLength)
 	{
 	}
 
-	void setLength(double aLength) { mLength = aLength; update(); }
+	void setIdealLength(double aIdealLength) { mIdealLength = aIdealLength; update(); }
 
 	void paint(
 		QPainter * aPainter,
@@ -117,6 +117,8 @@ private:
 	void gvMouseReleasedAddFixedPoint(QPointF aScenePos);
 	void gvMouseReleasedAddSpring(QPointF aScenePos);
 	void gvMouseReleasedRemoveObject(QPointF aScenePos);
+
+	void doAdjust();
 
 	/** Sets the current tool, updates the actions. */
 	void setCurrentTool(CurrentTool aNewTool);

@@ -27,7 +27,9 @@ void GraphicsSpringItem::paint(
 {
 	aPainter->setPen(pen());
 	aPainter->drawLine(line());
-	aPainter->drawText(line().center(), QString::number(mLength));
+	auto currentLength = line().length();
+	auto txt = QString("%1 / %2").arg(currentLength).arg(mIdealLength);
+	aPainter->drawText(line().center(), txt);
 }
 
 
@@ -89,6 +91,8 @@ void MainWindow::connectActions()
 	connect(mUI->actZoomIn,  &QAction::triggered, this, &MainWindow::zoomIn);
 	connect(mUI->actZoomOut, &QAction::triggered, this, &MainWindow::zoomOut);
 	connect(mUI->actZoomAll, &QAction::triggered, this, &MainWindow::zoomAll);
+
+	connect(mUI->actAdjust, &QAction::triggered, this, &MainWindow::doAdjust);
 }
 
 
@@ -211,7 +215,7 @@ void MainWindow::gvMouseMoved(QPointF aScenePos)
 				}
 				mNewSpringLine->setLine(mMouseDownPos.x(), mMouseDownPos.y(), aScenePos.x(), aScenePos.y());
 				auto length = mNewSpringLine->line().length();
-				mNewSpringLine->setLength(length);
+				mNewSpringLine->setIdealLength(length);
 			}
 			break;
 		}
@@ -314,7 +318,7 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 		auto diffX = startPoint.x() - pt2.x();
 		auto diffY = startPoint.y() - pt2.y();
 		auto len = std::sqrt(diffX * diffX + diffY * diffY);
-		springParams = SpringParamsDlg::ask(this, true, len);
+		springParams = SpringParamsDlg::ask(this, len);
 		endPointIdx = snap.second;
 	}
 	else
@@ -323,7 +327,7 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 		auto diffX = startPoint.x() - aScenePos.x();
 		auto diffY = startPoint.y() - aScenePos.y();
 		auto len = std::sqrt(diffX * diffX + diffY * diffY);
-		springParams = SpringParamsDlg::ask(this, false, len);
+		springParams = SpringParamsDlg::ask(this, len);
 		if (!springParams)
 		{
 			return;
@@ -352,6 +356,16 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 void MainWindow::gvMouseReleasedRemoveObject(QPointF aScenePos)
 {
 	// TODO
+}
+
+
+
+
+
+void MainWindow::doAdjust()
+{
+	mDocument->springNet().adjust();
+	updateScene();
 }
 
 

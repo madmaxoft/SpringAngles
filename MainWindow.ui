@@ -92,6 +92,8 @@
    <addaction name="actZoomIn"/>
    <addaction name="actZoomOut"/>
    <addaction name="actZoomAll"/>
+   <addaction name="separator"/>
+   <addaction name="actAdjust"/>
   </widget>
   <action name="actFileNew">
    <property name="icon">
@@ -192,7 +194,7 @@
     <bool>true</bool>
    </property>
    <property name="icon">
-    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+    <iconset theme="QIcon::ThemeIcon::DocumentSend"/>
    </property>
    <property name="text">
     <string>Select object</string>
@@ -223,6 +225,17 @@
    </property>
    <property name="text">
     <string>Zoom &amp;all</string>
+   </property>
+  </action>
+  <action name="actAdjust">
+   <property name="icon">
+    <iconset theme="QIcon::ThemeIcon::MediaPlaybackStart"/>
+   </property>
+   <property name="text">
+    <string>Adjust</string>
+   </property>
+   <property name="menuRole">
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
  </widget>

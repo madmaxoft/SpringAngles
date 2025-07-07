@@ -5,9 +5,9 @@
 
 
 
-std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, bool aIsFixedLength, double aLength)
+std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, double aLength)
 {
-	SpringParamsDlg dlg(aParent, aIsFixedLength, aLength);
+	SpringParamsDlg dlg(aParent, aLength);
 	if (dlg.exec() == QDialog::Rejected)
 	{
 		return std::nullopt;
@@ -22,12 +22,11 @@ std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, bool aIsFixe
 
 
 
-SpringParamsDlg::SpringParamsDlg(QWidget * aParent, bool aIsFixedLength, double aLength):
+SpringParamsDlg::SpringParamsDlg(QWidget * aParent, double aLength):
 	Super(aParent),
 	mUI(new Ui::SpringParamsDlg)
 {
 	mUI->setupUi(this);
-	mUI->eLength->setEnabled(!aIsFixedLength);
 	mUI->eLength->setText(QString::number(aLength));
 	mUI->eForce->setText("1");
 }
