@@ -1,10 +1,12 @@
 #include "MainWindow.hpp"
-#include "ui_MainWindow.h"
-#include "PointCoordsDlg.hpp"
-#include "SpringParamsDlg.hpp"
 
 #include <QActionGroup>
 #include <QGraphicsLineItem>
+#include <QFileDialog>
+
+#include "ui_MainWindow.h"
+#include "PointCoordsDlg.hpp"
+#include "SpringParamsDlg.hpp"
 
 
 
@@ -120,7 +122,11 @@ void MainWindow::fileOpen()
 
 void MainWindow::fileSave()
 {
-	// TODO
+	if (mDocument->fileName().isEmpty())
+	{
+		return fileSaveAs();
+	}
+	mDocument->saveToFile(mDocument->fileName());
 }
 
 
@@ -129,7 +135,12 @@ void MainWindow::fileSave()
 
 void MainWindow::fileSaveAs()
 {
-	// TODO
+	auto fnam = QFileDialog::getSaveFileName(this, tr("Save file"), {}, tr("SpringAngle documents (*.SpringAngle)"));
+	if (fnam.isEmpty())
+	{
+		return;
+	}
+	mDocument->saveToFile(fnam);
 }
 
 
