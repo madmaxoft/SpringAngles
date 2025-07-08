@@ -94,9 +94,13 @@ private:
 	/** Connects the actions to their slots in this form. */
 	void connectActions();
 
+
+public Q_SLOTS:
+
 	// Action slots:
 	void fileNew();
 	void fileOpen();
+	void fileOpenByName(const QString & aFileName);
 	void fileSave();
 	void fileSaveAs();
 
@@ -125,6 +129,9 @@ private:
 
 	/** Updates the mGraphicsScene from the current document. */
 	void updateScene();
+
+
+public:
 
 	/** Returns {true, ptIdx} when the specified query point is close enough to (the closest) ptIdx to snap.
 	Returns {false, ?} if too far away. */

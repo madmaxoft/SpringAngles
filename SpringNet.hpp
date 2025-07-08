@@ -117,6 +117,9 @@ public:
 	Throws a std::runtime_error if there are no points in the network. */
 	size_t nearestSpringIdx(double aX, double aY);
 
+	/** Removes everything from the containers. */
+	void clear();
+
 	/** Performs one round of spring-based point position adjustment. */
 	void adjust();
 };

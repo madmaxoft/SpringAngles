@@ -161,6 +161,16 @@ size_t SpringNet::nearestPointIdx(double aX, double aY)
 
 
 
+void SpringNet::clear()
+{
+	mSprings.clear();
+	mPoints.clear();
+}
+
+
+
+
+
 void SpringNet::adjust()
 {
 	std::map<size_t, std::vector<size_t>> springsAtPoints;  // ptIDx -> [springIdx, ...]

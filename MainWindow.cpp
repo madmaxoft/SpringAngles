@@ -3,6 +3,7 @@
 #include <QActionGroup>
 #include <QGraphicsLineItem>
 #include <QFileDialog>
+#include <QMessageBox>
 
 #include "ui_MainWindow.h"
 #include "PointCoordsDlg.hpp"
@@ -113,7 +114,37 @@ void MainWindow::fileNew()
 
 void MainWindow::fileOpen()
 {
-	// TODO
+	auto fnam = QFileDialog::getOpenFileName(
+		this,
+		tr("SpringAngles: Open file"),
+		{},
+		tr("SpringAngles documents (*.SpringAngles)")
+	);
+	fileOpenByName(fnam);
+}
+
+
+
+
+
+void MainWindow::fileOpenByName(const QString & aFileName)
+{
+	auto doc = std::make_unique<Document>();
+	try
+	{
+		doc->loadFromFile(aFileName);
+	}
+	catch (const std::exception & exc)
+	{
+		QMessageBox::warning(
+			this,
+			tr("SpringAngles: Cannot open file"),
+			tr("Cannot open file %1: %2").arg(aFileName, QString::fromUtf8(exc.what()))
+		);
+		return;
+	}
+	mDocument = std::move(doc);
+	updateScene();
 }
 
 
@@ -126,7 +157,19 @@ void MainWindow::fileSave()
 	{
 		return fileSaveAs();
 	}
-	mDocument->saveToFile(mDocument->fileName());
+	try
+	{
+		mDocument->saveToFile(mDocument->fileName());
+	}
+	catch (const std::exception & exc)
+	{
+		QMessageBox::warning(
+			this,
+			tr("SpringAngles: Cannot save file"),
+			tr("Cannot save file %1: %2").arg(mDocument->fileName(), QString::fromUtf8(exc.what()))
+		);
+		return;
+	}
 }
 
 
@@ -135,12 +178,18 @@ void MainWindow::fileSave()
 
 void MainWindow::fileSaveAs()
 {
-	auto fnam = QFileDialog::getSaveFileName(this, tr("Save file"), {}, tr("SpringAngle documents (*.SpringAngle)"));
+	auto fnam = QFileDialog::getSaveFileName(
+		this,
+		tr("SpringAngles: Save file"),
+		{},
+		tr("SpringAngles documents (*.SpringAngles)")
+	);
 	if (fnam.isEmpty())
 	{
 		return;
 	}
-	mDocument->saveToFile(fnam);
+	mDocument->setFileName(fnam);
+	fileSave();
 }
 
 
