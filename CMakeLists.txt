@@ -13,17 +13,25 @@ set (CMAKE_INCLUDE_CURRENT_DIR ON)
 
 
 qt_add_executable(SpringAngles
-    WIN32 MACOSX_BUNDLE
+	WIN32 MACOSX_BUNDLE
 
-    Main.cpp
-    MainWindow.cpp
-    MainWindow.hpp
-    MainWindow.ui
-    SpringNet.hpp SpringNet.cpp
-    Document.hpp Document.cpp
-    CadGraphicsView.hpp CadGraphicsView.cpp
-    PointCoordsDlg.hpp PointCoordsDlg.cpp PointCoordsDlg.ui
-    SpringParamsDlg.hpp SpringParamsDlg.cpp SpringParamsDlg.ui
+	CadGraphicsView.cpp
+	CadGraphicsView.hpp
+	Document.cpp
+	Document.hpp
+	Geometry.hpp
+	Main.cpp
+	MainWindow.cpp
+	MainWindow.hpp
+	MainWindow.ui
+	PointCoordsDlg.cpp
+	PointCoordsDlg.hpp
+	PointCoordsDlg.ui
+	SpringNet.cpp
+	SpringNet.hpp
+	SpringParamsDlg.cpp
+	SpringParamsDlg.hpp
+	SpringParamsDlg.ui
 )
 
 
@@ -31,24 +39,24 @@ qt_add_executable(SpringAngles
 
 
 target_link_libraries(
-    SpringAngles
-    PRIVATE
-        Qt::Core
-        Qt::Widgets
+	SpringAngles
+	PRIVATE
+		Qt::Core
+		Qt::Widgets
 )
 
 include(GNUInstallDirs)
 
 install(
-    TARGETS SpringAngles
-    BUNDLE  DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-    LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+	TARGETS SpringAngles
+	BUNDLE  DESTINATION .
+	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 )
 
 qt_generate_deploy_app_script(
-    TARGET SpringAngles
-    OUTPUT_SCRIPT deploy_script
-    NO_UNSUPPORTED_PLATFORM_ERROR
+	TARGET SpringAngles
+	OUTPUT_SCRIPT deploy_script
+	NO_UNSUPPORTED_PLATFORM_ERROR
 )
 install(SCRIPT ${deploy_script})

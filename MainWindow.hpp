@@ -18,6 +18,31 @@ QT_END_NAMESPACE
 
 
 
+/** QGraphicsItem descendant that is used for drawing points. */
+class GraphicsPointItem:
+	public QGraphicsRectItem
+{
+	using Super = QGraphicsRectItem;
+
+
+public:
+	GraphicsPointItem(QPointF aPt):
+		Super(aPt.x() - 1, aPt.y() - 1, 3, 3)
+	{
+	}
+
+
+	void paint(
+		QPainter * aPainter,
+		const QStyleOptionGraphicsItem * aOption,
+		QWidget * aWidget = nullptr
+	) override;
+};
+
+
+
+
+
 /** QGraphicsItem descendant that is used for drawing springs. */
 class GraphicsSpringItem:
 	public QGraphicsLineItem
@@ -37,10 +62,15 @@ public:
 
 	void setIdealLength(double aIdealLength) { mIdealLength = aIdealLength; update(); }
 
+	void setLine(QPointF aPt1, QPointF aPt2)
+	{
+		Super::setLine(aPt1.x(), aPt1.y(), aPt2.x(), aPt2.y());
+	}
+
 	void paint(
 		QPainter * aPainter,
 		const QStyleOptionGraphicsItem * aOption,
-		QWidget * widget = nullptr
+		QWidget * aWidget = nullptr
 	) override;
 };
 
@@ -88,14 +118,20 @@ private:
 	QPointF mMouseDownPos;
 
 	/** The line used to show newly created spring. */
-	GraphicsSpringItem * mNewSpringLine;
+	GraphicsSpringItem * mNewSpringLine = nullptr;
+
+	/** The QGraphicsItem-s representing the points, in the same order as the points. */
+	std::vector<QGraphicsItem *> mItemsForPoints;
+
+	/** The QGraphicsItem-s representing the springs, in the same order as the springs. */
+	std::vector<QGraphicsItem *> mItemsForSprings;
 
 
 	/** Connects the actions to their slots in this form. */
 	void connectActions();
 
 
-public Q_SLOTS:
+public:
 
 	// Action slots:
 	void fileNew();
@@ -113,8 +149,12 @@ public Q_SLOTS:
 	void zoomOut();
 	void zoomAll();
 
+
+private:
+
 	void gvMouseMoved(QPointF aScenePos);
 	void gvMousePressed(QPointF aScenePos, Qt::MouseButton aButton);
+	void gvMouseDblClicked(QPointF aScenePos, Qt::MouseButton aButton);
 	void gvMouseReleased(QPointF aScenePos, Qt::MouseButton aButton);
 
 	void gvMouseReleasedSelectObject(QPointF aScenePos);
@@ -130,10 +170,19 @@ public Q_SLOTS:
 	/** Updates the mGraphicsScene from the current document. */
 	void updateScene();
 
+	/** Scales the specified threshold from screen coords to scene coords. */
+	double scaleThreshold(double aThreshold) const;
 
-public:
+	/** Returns the threshold to snap to objects in scene coord length, squared. */
+	double snapThresholdSquared() const;
 
-	/** Returns {true, ptIdx} when the specified query point is close enough to (the closest) ptIdx to snap.
-	Returns {false, ?} if too far away. */
-	std::pair<bool, size_t> snapToPoint(QPointF aQueryPt);
+	/** Returns the graphics item representing the specified point visually, nullptr if not found. */
+	QGraphicsItem * itemForPoint(size_t aPointIdx);
+
+	/** Returns the graphics item representing the specified spring visually, nullptr if not found. */
+	QGraphicsItem * itemForSpring(size_t aSpringIdx);
+
+	/** Returns the graphics item representing the specified object visually.
+	Returns nullptr if no such item. */
+	QGraphicsItem * itemForObject(std::pair<SpringNet::ObjectType, size_t> aObjectDef);
 };

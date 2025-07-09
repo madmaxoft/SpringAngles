@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <QPointF>
 
 
 
@@ -13,29 +14,36 @@ class SpringNet;
 
 
 
-class Point
+/** Represents a single point, either a fixed one or a moving one, that can define a spring endpoint. */
+class Point:
+	public QPointF
 {
-	double mX, mY;
+	using Super = QPointF;
 
 	/** A fixed point cannot be moved at all. */
 	bool mIsFixed;
 
+
 public:
+
 	Point(double aX, double aY, bool aIsFixed = false):
-		mX(aX),
-		mY(aY),
+		Super(aX, aY),
 		mIsFixed(aIsFixed)
 	{
 	}
 
-	double x() const { return mX; }
-	double y() const { return mY; }
+	Point(const QPointF & aPos, bool aIsFixed = false):
+		Super(aPos),
+		mIsFixed(aIsFixed)
+	{
+	}
+
 	bool isFixed() const { return mIsFixed; }
 
 	void set(double aX, double aY)
 	{
-		mX = aX;
-		mY = aY;
+		setX(aX);
+		setY(aY);
 	}
 };
 
@@ -78,6 +86,9 @@ public:
 
 	/** Returns the length, projected from a sloped measurement onto a flat floor. */
 	static double projectLengthToFloor(double aLength, double aHeightDifference);
+
+	/** Returns the square of the distance between the specified point and the spring. */
+	double distanceSquared(QPointF aPt);
 };
 
 
@@ -91,6 +102,15 @@ class SpringNet
 
 
 public:
+
+	/** Object type, for functions handling multiple object types. */
+	enum class ObjectType
+	{
+		None,
+		Point,
+		Spring,
+	};
+
 
 	SpringNet();
 
@@ -111,15 +131,23 @@ public:
 
 	/** Returns the index of the point nearest to the specified coords.
 	Throws a std::runtime_error if there are no points in the network. */
-	size_t nearestPointIdx(double aX, double aY);
+	size_t nearestPointIdx(QPointF aQueryPt);
 
 	/** Returns the index of the point nearest to the specified coords.
 	Throws a std::runtime_error if there are no points in the network. */
-	size_t nearestSpringIdx(double aX, double aY);
+	size_t nearestSpringIdx(QPointF aQueryPt);
 
 	/** Removes everything from the containers. */
 	void clear();
 
 	/** Performs one round of spring-based point position adjustment. */
 	void adjust();
+
+	/** Returns {true, ptIdx} when the query position is within snap distance of a point,
+	{false, ?} if too far or no points. */
+	std::pair<bool, size_t> snapToPoint(QPointF aQueryPt, double aPointSnapDistSq);
+
+	/** Returns the object nearest to the specified position. */
+	std::pair<ObjectType, size_t> nearestObject(QPointF aScenePos, double aSnapDistSq);
+
 };

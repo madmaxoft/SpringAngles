@@ -25,6 +25,7 @@ public:
 	SpringNet & springNet() { return mSpringNet; }
 	const SpringNet & springNet() const { return mSpringNet; }
 	const QString & fileName() const { return mFileName; }
+	void setFileName(const QString & aFileName) { mFileName = aFileName; }
 
 	void loadFromFile(const QString & aFileName);
 	void loadFromIO(QIODevice * aIO);

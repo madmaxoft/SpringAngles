@@ -5,21 +5,7 @@
 #include <stdexcept>
 #include <map>
 
-
-
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Global:
-namespace {
-
-/** Returns the square of the distance between the two selected points. */
-double distSquared(double aX1, double aY1, double aX2, double aY2)
-{
-	return ((aX1 - aX2) * (aX1 - aX2) + (aY1 - aY2) * (aY1 - aY2));
-}
-
-}
+#include "Geometry.hpp"
 
 
 
@@ -104,6 +90,15 @@ double Spring::projectLengthToFloor(double aLength, double aHeightDifference)
 
 
 
+double Spring::distanceSquared(QPointF aPt)
+{
+	return Geometry::distanceSquared(aPt, point1(), point2());
+}
+
+
+
+
+
 ///////////////////////////////////////////////////////////////////////////////
 // SpringNet:
 
@@ -136,7 +131,7 @@ const Spring & SpringNet::addSpring(double aIdealLength, double aForce, size_t a
 
 
 
-size_t SpringNet::nearestPointIdx(double aX, double aY)
+size_t SpringNet::nearestPointIdx(QPointF aQueryPt)
 {
 	if (mPoints.empty())
 	{
@@ -144,10 +139,35 @@ size_t SpringNet::nearestPointIdx(double aX, double aY)
 	}
 	auto num = mPoints.size();
 	auto res = 0;
-	auto minDist = distSquared(mPoints[0].x(), mPoints[0].y(), aX, aY);
+	auto minDist = Geometry::distanceSquared(mPoints[0], aQueryPt);
 	for (size_t idx = 1; idx < num; ++idx)
 	{
-		auto dist = distSquared(mPoints[idx].x(), mPoints[idx].y(), aX, aY);
+		auto dist = Geometry::distanceSquared(mPoints[idx], aQueryPt);
+		if (dist < minDist)
+		{
+			minDist = dist;
+			res = idx;
+		}
+	}
+	return res;
+}
+
+
+
+
+
+size_t SpringNet::nearestSpringIdx(QPointF aQueryPt)
+{
+	if (mSprings.empty())
+	{
+		throw std::runtime_error("No springs to query");
+	}
+	auto num = mPoints.size();
+	auto res = 0;
+	auto minDist = mSprings[0].distanceSquared(aQueryPt);
+	for (size_t idx = 1; idx < num; ++idx)
+	{
+		auto dist = mSprings[idx].distanceSquared(aQueryPt);
 		if (dist < minDist)
 		{
 			minDist = dist;
@@ -213,4 +233,56 @@ void SpringNet::adjust()
 		newPoints[ptIdx].set(nx, ny);
 	}
 	mPoints = newPoints;
+}
+
+
+
+
+std::pair<bool, size_t> SpringNet::snapToPoint(QPointF aQueryPt, double aPointSnapDistSq)
+{
+	if (mPoints.empty())
+	{
+		return {false, 0};
+	}
+	auto nearestPtIdx = nearestPointIdx(aQueryPt);
+	const auto & pt = point(nearestPtIdx);
+	auto lenSq = Geometry::distanceSquared(aQueryPt, pt);
+	return {(lenSq < aPointSnapDistSq), nearestPtIdx};
+}
+
+
+
+
+
+std::pair<SpringNet::ObjectType, size_t> SpringNet::nearestObject(QPointF aScenePos, double aSnapDistSq)
+{
+	if (mPoints.empty())
+	{
+		return {ObjectType::None, 0};
+	}
+	auto ptIdx = nearestPointIdx(aScenePos);
+	if (mSprings.empty())
+	{
+		return {ObjectType::Point, ptIdx};
+	}
+	auto & pt = mPoints[ptIdx];
+	auto ptDistSq = Geometry::distanceSquared(aScenePos, pt);
+	auto springIdx = nearestSpringIdx(aScenePos);
+	auto springDistSq = Geometry::distanceSquared(aScenePos, mSprings[springIdx].point1(), mSprings[springIdx].point2());
+	if (ptDistSq < aSnapDistSq)
+	{
+		return {ObjectType::Point, ptIdx};
+	}
+	if (springDistSq < aSnapDistSq)
+	{
+		return {ObjectType::Spring, springIdx};
+	}
+	if (springDistSq < ptDistSq)
+	{
+		return {ObjectType::Spring, springIdx};
+	}
+	else
+	{
+		return {ObjectType::Point, ptIdx};
+	}
 }

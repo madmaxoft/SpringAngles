@@ -115,3 +115,13 @@ void CadGraphicsView::mouseReleaseEvent(QMouseEvent * aEvent)
 	mouseMoveEvent(aEvent);
 	Q_EMIT mouseReleased(mapToScene(aEvent->pos()), aEvent->button());
 }
+
+
+
+
+
+void CadGraphicsView::mouseDoubleClickEvent(QMouseEvent * aEvent)
+{
+	Q_EMIT mouseDblClicked(mapToScene(aEvent->pos()), aEvent->button());
+	Super::mouseDoubleClickEvent(aEvent);
+}

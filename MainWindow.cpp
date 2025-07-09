@@ -8,6 +8,7 @@
 #include "ui_MainWindow.h"
 #include "PointCoordsDlg.hpp"
 #include "SpringParamsDlg.hpp"
+#include "Geometry.hpp"
 
 
 
@@ -16,19 +17,65 @@
 namespace {
 /** The max distance (in pixels) to snap to points. */
 static const double POINT_SNAP_THRESHOLD = 10;
+}  // anonymous namespace
+
+
+
+
+
+//////////////////////////////////////////////////////////////////////////////
+// GraphicsPointItem:
+
+void GraphicsPointItem::paint(
+	QPainter * aPainter,
+	const QStyleOptionGraphicsItem * aOption,
+	QWidget * aWidget
+)
+{
+	Q_UNUSED(aOption);
+	Q_UNUSED(aWidget);
+
+	if (isSelected())
+	{
+		auto p = pen();
+		p.setWidth(p.width() + 4);
+		p.setColor(QColor::fromRgb(0, 0xff, 0xff));
+		aPainter->setPen(p);
+	}
+	else
+	{
+		aPainter->setPen(pen());
+	}
+	aPainter->drawRect(rect());
 }
 
 
 
 
 
+//////////////////////////////////////////////////////////////////////////////
+// GraphicsSpringItem:
+
 void GraphicsSpringItem::paint(
 	QPainter * aPainter,
 	const QStyleOptionGraphicsItem * aOption,
-	QWidget * widget
+	QWidget * aWidget
 )
 {
-	aPainter->setPen(pen());
+	Q_UNUSED(aOption);
+	Q_UNUSED(aWidget);
+
+	if (isSelected())
+	{
+		auto p = pen();
+		p.setWidth(p.width() + 4);
+		p.setColor(QColor::fromRgb(0, 0xff, 0xff));
+		aPainter->setPen(p);
+	}
+	else
+	{
+		aPainter->setPen(pen());
+	}
 	aPainter->drawLine(line());
 	auto currentLength = line().length();
 	auto txt = QString("%1 / %2").arg(currentLength).arg(mIdealLength);
@@ -47,16 +94,16 @@ MainWindow::MainWindow(QWidget * aParent):
 	Super(aParent),
 	mUI(new Ui::MainWindow),
 	mGraphicsScene(new QGraphicsScene),
-	mDocument(new Document),
-	mNewSpringLine(nullptr)
+	mDocument(new Document)
 {
 	mUI->setupUi(this);
 	mUI->gvMain->setScene(mGraphicsScene.get());
 
 	connectActions();
-	connect(mUI->gvMain, &CadGraphicsView::mouseReleased, this, &MainWindow::gvMouseReleased);
-	connect(mUI->gvMain, &CadGraphicsView::mousePressed,  this, &MainWindow::gvMousePressed);
-	connect(mUI->gvMain, &CadGraphicsView::mouseMoved,    this, &MainWindow::gvMouseMoved);
+	connect(mUI->gvMain, &CadGraphicsView::mouseReleased,   this, &MainWindow::gvMouseReleased);
+	connect(mUI->gvMain, &CadGraphicsView::mousePressed,    this, &MainWindow::gvMousePressed);
+	connect(mUI->gvMain, &CadGraphicsView::mouseMoved,      this, &MainWindow::gvMouseMoved);
+	connect(mUI->gvMain, &CadGraphicsView::mouseDblClicked, this, &MainWindow::gvMouseDblClicked);
 
 	setCurrentTool(CurrentTool::AddFixedPoint);
 	updateScene();
@@ -263,17 +310,28 @@ void MainWindow::gvMouseMoved(QPointF aScenePos)
 {
 	switch (mCurrentTool)
 	{
+		case CurrentTool::SelectObject:
+		{
+			auto nearest = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
+			auto item = itemForObject(nearest);
+			if (item != nullptr)
+			{
+				mGraphicsScene->clearSelection();
+				item->setSelected(true);
+			}
+			break;
+		}
 		case CurrentTool::AddSpring:
 		{
 			if (QApplication::mouseButtons() & Qt::LeftButton)
 			{
-				auto snap = snapToPoint(aScenePos);
+				auto snap = mDocument->springNet().snapToPoint(aScenePos, snapThresholdSquared());
 				if (snap.first)
 				{
 					auto snapPt = mDocument->springNet().point(snap.second);
 					aScenePos = QPointF(snapPt.x(), snapPt.y());
 				}
-				mNewSpringLine->setLine(mMouseDownPos.x(), mMouseDownPos.y(), aScenePos.x(), aScenePos.y());
+				mNewSpringLine->setLine(mMouseDownPos, aScenePos);
 				auto length = mNewSpringLine->line().length();
 				mNewSpringLine->setIdealLength(length);
 			}
@@ -298,11 +356,37 @@ void MainWindow::gvMousePressed(QPointF aScenePos, Qt::MouseButton aButton)
 	{
 		case CurrentTool::AddSpring:
 		{
-			auto startPtIdx = mDocument->springNet().nearestPointIdx(aScenePos.x(), aScenePos.y());
+			auto startPtIdx = mDocument->springNet().nearestPointIdx(aScenePos);
 			auto startPt = mDocument->springNet().point(startPtIdx);
 			mMouseDownPos = QPointF(startPt.x(), startPt.y());
-			mNewSpringLine->setLine(startPt.x(), startPt.y(), startPt.x(), startPt.y());
+			mNewSpringLine->setLine(startPt, startPt);
 			mNewSpringLine->show();
+			break;
+		}
+		default: break;
+	}
+}
+
+
+
+
+
+void MainWindow::gvMouseDblClicked(QPointF aScenePos, Qt::MouseButton aButton)
+{
+	if (aButton != Qt::LeftButton)
+	{
+		return;
+	}
+	switch (mCurrentTool)
+	{
+		case CurrentTool::SelectObject:
+		{
+			auto nearestObj = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
+			switch (nearestObj.first)
+			{
+				case SpringNet::ObjectType::None: break;
+				// TODO
+			}
 			break;
 		}
 		default: break;
@@ -362,9 +446,9 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 	{
 		return;
 	}
-	auto startPointIdx = mDocument->springNet().nearestPointIdx(mMouseDownPos.x(), mMouseDownPos.y());
+	auto startPointIdx = mDocument->springNet().nearestPointIdx(mMouseDownPos);
 	auto startPoint = mDocument->springNet().point(startPointIdx);
-	auto snap = snapToPoint(aScenePos);
+	auto snap = mDocument->springNet().snapToPoint(aScenePos, snapThresholdSquared());
 	size_t endPointIdx;
 	std::optional<SpringParams> springParams;
 	if (snap.first)
@@ -448,9 +532,14 @@ void MainWindow::setCurrentTool(CurrentTool aNewTool)
 void MainWindow::updateScene()
 {
 	mGraphicsScene->clear();
+	mItemsForPoints.clear();
+	mItemsForSprings.clear();
 	for (const auto & p: mDocument->springNet().points())
 	{
-		mGraphicsScene->addEllipse(p.x(), p.y(), 3, 3);
+		auto pt = new GraphicsPointItem(p);
+		mGraphicsScene->addItem(pt);
+		pt->setFlag(QGraphicsItem::ItemIsSelectable);
+		mItemsForPoints.push_back(pt);
 	}
 	for (const auto & s: mDocument->springNet().springs())
 	{
@@ -460,6 +549,8 @@ void MainWindow::updateScene()
 		auto y2 = s.point2().y();
 		auto line = new GraphicsSpringItem(x1, y1, x2, y2, s.idealLength());
 		mGraphicsScene->addItem(line);
+		line->setFlag(QGraphicsItem::ItemIsSelectable);
+		mItemsForSprings.push_back(line);
 	}
 	mNewSpringLine = new GraphicsSpringItem(0, 0, 0, 0, 0);
 	mGraphicsScene->addItem(mNewSpringLine);
@@ -471,13 +562,58 @@ void MainWindow::updateScene()
 
 
 
-std::pair<bool, size_t> MainWindow::snapToPoint(QPointF aQueryPt)
+double MainWindow::scaleThreshold(double aThreshold) const
 {
-	auto nearestPtIdx = mDocument->springNet().nearestPointIdx(aQueryPt.x(), aQueryPt.y());
-	const auto & pt = mDocument->springNet().point(nearestPtIdx);
-	auto ptScreenCoords = mUI->gvMain->mapFromScene(pt.x(), pt.y());
-	auto queryScreenCoords = mUI->gvMain->mapFromScene(aQueryPt.x(), aQueryPt.y());
-	auto diff = queryScreenCoords - ptScreenCoords;
-	auto len = std::sqrt(diff.x() * diff.x() + diff.y() * diff.y());
-	return {(len < POINT_SNAP_THRESHOLD), nearestPtIdx};
+	return aThreshold * (mUI->gvMain->transform().m22() + mUI->gvMain->transform().m11()) / 2;
+}
+
+
+
+
+
+double MainWindow::snapThresholdSquared() const
+{
+	auto thr = scaleThreshold(POINT_SNAP_THRESHOLD);
+	return thr * thr;
+}
+
+
+
+
+
+QGraphicsItem * MainWindow::itemForPoint(size_t aPointIdx)
+{
+	if (aPointIdx >= mDocument->springNet().numPoints())
+	{
+		return nullptr;
+	}
+	return mItemsForPoints[aPointIdx];
+}
+
+
+
+
+
+QGraphicsItem * MainWindow::itemForSpring(size_t aSpringIdx)
+{
+	if (aSpringIdx >= mDocument->springNet().numSprings())
+	{
+		return nullptr;
+	}
+	return mItemsForSprings[aSpringIdx];
+}
+
+
+
+
+
+QGraphicsItem * MainWindow::itemForObject(std::pair<SpringNet::ObjectType, size_t> aObjectDef)
+{
+	switch (aObjectDef.first)
+	{
+		case SpringNet::ObjectType::None:   return nullptr;
+		case SpringNet::ObjectType::Point:  return itemForPoint(aObjectDef.second);
+		case SpringNet::ObjectType::Spring: return itemForSpring(aObjectDef.second);
+	}
+	return nullptr;
 }

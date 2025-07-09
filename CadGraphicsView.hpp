@@ -35,6 +35,9 @@ Q_SIGNALS:
 	/** Emitted when a mouse button is released within the space of this widget. */
 	void mouseReleased(QPointF aSceneMousePos, Qt::MouseButton aButton);
 
+	/** Emitted when a mouse button is dbl-clicked within the space of this widget. */
+	void mouseDblClicked(QPointF aSceneMousePos, Qt::MouseButton aButton);
+
 
 protected:
 
@@ -56,4 +59,5 @@ protected:
 	virtual void mouseMoveEvent(QMouseEvent * aEvent) override;
 	virtual void mousePressEvent(QMouseEvent * aEvent) override;
 	virtual void mouseReleaseEvent(QMouseEvent * aEvent) override;
+	virtual void mouseDoubleClickEvent(QMouseEvent * aEvent) override;
 };
