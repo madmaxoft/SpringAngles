@@ -32,6 +32,24 @@ const Point & Spring::point2() const
 
 
 
+Point & Spring::point1()
+{
+	return mParentNet.point(mPointIdx1);
+}
+
+
+
+
+
+Point & Spring::point2()
+{
+	return mParentNet.point(mPointIdx2);
+}
+
+
+
+
+
 double Spring::currentLength() const
 {
 	auto pt1 = point1();

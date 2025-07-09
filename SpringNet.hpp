@@ -74,9 +74,13 @@ public:
 	size_t pointIdx2() const { return mPointIdx2; }
 	const Point & point1() const;
 	const Point & point2() const;
+	Point & point1();
+	Point & point2();
 	double idealLength() const { return mIdealLength; }
 	double force() const { return mForce; }
 	double currentLength() const;
+	void setIdealLength(double aIdealLength) { mIdealLength = aIdealLength; }
+	void setForce(double aForce) { mForce = aForce; }
 	double diffX() const;
 	double diffY() const;
 
@@ -121,7 +125,9 @@ public:
 	size_t numSprings() const { return mSprings.size(); }
 
 	const Point & point(size_t aIdx) const { return mPoints[aIdx]; }
+	Point & point(size_t aIdx) { return mPoints[aIdx]; }
 	const Spring & spring(size_t aIdx) const { return mSprings[aIdx]; }
+	Spring & spring(size_t aIdx) { return mSprings[aIdx]; }
 
 	/** Adds a new point with the specified properties, returns a reference to it. */
 	const Point & addPoint(double aX, double aY, bool aIsFixed);

@@ -385,7 +385,28 @@ void MainWindow::gvMouseDblClicked(QPointF aScenePos, Qt::MouseButton aButton)
 			switch (nearestObj.first)
 			{
 				case SpringNet::ObjectType::None: break;
-				// TODO
+				case SpringNet::ObjectType::Point:
+				{
+					auto newCoords = PointCoordsDlg::ask(this, mDocument->springNet().point(nearestObj.second));
+					if (newCoords != std::nullopt)
+					{
+						mDocument->springNet().point(nearestObj.second).set(newCoords->x(), newCoords->y());
+						updateScene();
+					}
+					break;
+				}
+				case SpringNet::ObjectType::Spring:
+				{
+					auto & spring = mDocument->springNet().spring(nearestObj.second);
+					auto newParams = SpringParamsDlg::ask(this, spring.idealLength(), spring.force());
+					if (newParams != std::nullopt)
+					{
+						spring.setIdealLength(newParams->mIdealLength);
+						spring.setForce(newParams->mForce);
+						updateScene();
+					}
+					break;
+				}
 			}
 			break;
 		}
@@ -462,7 +483,7 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 		auto diffX = startPoint.x() - pt2.x();
 		auto diffY = startPoint.y() - pt2.y();
 		auto len = std::sqrt(diffX * diffX + diffY * diffY);
-		springParams = SpringParamsDlg::ask(this, len);
+		springParams = SpringParamsDlg::ask(this, len, 1);
 		endPointIdx = snap.second;
 	}
 	else
@@ -471,14 +492,14 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 		auto diffX = startPoint.x() - aScenePos.x();
 		auto diffY = startPoint.y() - aScenePos.y();
 		auto len = std::sqrt(diffX * diffX + diffY * diffY);
-		springParams = SpringParamsDlg::ask(this, len);
+		springParams = SpringParamsDlg::ask(this, len, 1);
 		if (!springParams)
 		{
 			return;
 		}
 		// Add a new point for the spring:
-		auto x = startPoint.x() - diffX * springParams->mLength / len;
-		auto y = startPoint.y() - diffY * springParams->mLength / len;
+		auto x = startPoint.x() - diffX * springParams->mIdealLength / len;
+		auto y = startPoint.y() - diffY * springParams->mIdealLength / len;
 		mDocument->springNet().addPoint(x, y, false);
 		endPointIdx = mDocument->springNet().numPoints() - 1;
 	}
@@ -488,7 +509,7 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 	{
 		return;
 	}
-	mDocument->springNet().addSpring(springParams->mLength, springParams->mForce, startPointIdx, endPointIdx);
+	mDocument->springNet().addSpring(springParams->mIdealLength, springParams->mForce, startPointIdx, endPointIdx);
 
 	updateScene();
 }

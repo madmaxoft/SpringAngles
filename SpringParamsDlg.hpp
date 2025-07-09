@@ -17,7 +17,7 @@ class SpringParamsDlg;
 
 struct SpringParams
 {
-	double mLength;
+	double mIdealLength;
 	double mForce;
 };
 
@@ -36,7 +36,7 @@ class SpringParamsDlg:
 public:
 
 	/** Shows the dialog and returns thevalues the user provides. */
-	static std::optional<SpringParams> ask(QWidget * aParent, double aLength);
+	static std::optional<SpringParams> ask(QWidget * aParent, double aIdealLength, double aForce);
 
 
 private:
@@ -45,9 +45,9 @@ private:
 	std::unique_ptr<Ui::SpringParamsDlg> mUI;
 
 
-	explicit SpringParamsDlg(QWidget * aParent, double aLength);
+	explicit SpringParamsDlg(QWidget * aParent, double aIdealLength, double aForce);
 	~SpringParamsDlg();
 
-	double length() const;
+	double idealLength() const;
 	double force() const;
 };

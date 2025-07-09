@@ -5,15 +5,15 @@
 
 
 
-std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, double aLength)
+std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, double aIdealLength, double aForce)
 {
-	SpringParamsDlg dlg(aParent, aLength);
+	SpringParamsDlg dlg(aParent, aIdealLength, aForce);
 	if (dlg.exec() == QDialog::Rejected)
 	{
 		return std::nullopt;
 	}
 	SpringParams sp;
-	sp.mLength = dlg.length();
+	sp.mIdealLength = dlg.idealLength();
 	sp.mForce = dlg.force();
 	return sp;
 }
@@ -22,13 +22,13 @@ std::optional<SpringParams> SpringParamsDlg::ask(QWidget * aParent, double aLeng
 
 
 
-SpringParamsDlg::SpringParamsDlg(QWidget * aParent, double aLength):
+SpringParamsDlg::SpringParamsDlg(QWidget * aParent, double aIdealLength, double aForce):
 	Super(aParent),
 	mUI(new Ui::SpringParamsDlg)
 {
 	mUI->setupUi(this);
-	mUI->eLength->setText(QString::number(aLength));
-	mUI->eForce->setText("1");
+	mUI->eLength->setText(QString::number(aIdealLength));
+	mUI->eForce->setText(QString::number(aForce));
 }
 
 
@@ -44,7 +44,7 @@ SpringParamsDlg::~SpringParamsDlg()
 
 
 
-double SpringParamsDlg::length() const
+double SpringParamsDlg::idealLength() const
 {
 	return mUI->eLength->text().toDouble();
 }
