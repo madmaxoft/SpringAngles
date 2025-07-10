@@ -1,6 +1,10 @@
 cmake_minimum_required(VERSION 3.19)
 project(SpringAngles LANGUAGES CXX)
 
+# Force the project to use C++20:
+set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
 find_package(Qt6 6.5 REQUIRED COMPONENTS Core Widgets)
 
 qt_standard_project_setup()

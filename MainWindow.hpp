@@ -188,4 +188,7 @@ private:
 	/** Returns the graphics item representing the specified object visually.
 	Returns nullptr if no such item. */
 	QGraphicsItem * itemForObject(std::pair<SpringNet::ObjectType, size_t> aObjectDef);
+
+	/** Selects the nearest object, deselecting any previous selection. */
+	void selectNearestObject(QPointF aScenePos);
 };

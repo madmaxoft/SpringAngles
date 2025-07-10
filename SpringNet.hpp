@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <memory>
 #include <QPointF>
 
 
@@ -53,6 +54,8 @@ public:
 	}
 };
 
+using PointPtr = std::shared_ptr<Point>;
+
 
 
 
@@ -78,6 +81,8 @@ public:
 
 	size_t pointIdx1() const { return mPointIdx1; }
 	size_t pointIdx2() const { return mPointIdx2; }
+	void setPointIdx1(size_t aPointIdx1) { mPointIdx1 = aPointIdx1; }
+	void setPointIdx2(size_t aPointIdx2) { mPointIdx2 = aPointIdx2; }
 	const Point & point1() const;
 	const Point & point2() const;
 	Point & point1();
@@ -101,14 +106,16 @@ public:
 	double distanceSquared(QPointF aPt);
 };
 
+using SpringPtr = std::shared_ptr<Spring>;
+
 
 
 
 
 class SpringNet
 {
-	std::vector<Point> mPoints;
-	std::vector<Spring> mSprings;
+	std::vector<PointPtr> mPoints;
+	std::vector<SpringPtr> mSprings;
 
 
 public:
@@ -124,22 +131,22 @@ public:
 
 	SpringNet();
 
-	const std::vector<Point> & points() const { return mPoints; }
-	const std::vector<Spring> & springs() const { return mSprings; }
+	const std::vector<PointPtr> & points() const { return mPoints; }
+	const std::vector<SpringPtr> & springs() const { return mSprings; }
 
 	size_t numPoints() const { return mPoints.size(); }
 	size_t numSprings() const { return mSprings.size(); }
 
-	const Point & point(size_t aIdx) const { return mPoints[aIdx]; }
-	Point & point(size_t aIdx) { return mPoints[aIdx]; }
-	const Spring & spring(size_t aIdx) const { return mSprings[aIdx]; }
-	Spring & spring(size_t aIdx) { return mSprings[aIdx]; }
+	const Point & point(size_t aIdx) const { return *mPoints[aIdx]; }
+	Point & point(size_t aIdx) { return *mPoints[aIdx]; }
+	const Spring & spring(size_t aIdx) const { return *mSprings[aIdx]; }
+	Spring & spring(size_t aIdx) { return *mSprings[aIdx]; }
 
-	/** Adds a new point with the specified properties, returns a reference to it. */
-	const Point & addPoint(double aX, double aY, bool aIsFixed);
+	/** Adds a new point with the specified properties. */
+	void addPoint(QPointF aPos, bool aIsFixed);
 
-	/** Adds a new spring with the specified properties, returns a reference to it. */
-	const Spring & addSpring(double aIdealLength, double aForce, size_t aPointIdx1, size_t aPointIdx2);
+	/** Adds a new spring with the specified properties. */
+	void addSpring(double aIdealLength, double aForce, size_t aPointIdx1, size_t aPointIdx2);
 
 	/** Returns the index of the point nearest to the specified coords.
 	Throws a std::runtime_error if there are no points in the network. */
@@ -162,4 +169,10 @@ public:
 	/** Returns the object nearest to the specified position. */
 	std::pair<ObjectType, size_t> nearestObject(QPointF aScenePos, double aSnapDistSq);
 
+	/** Removes the point at the specified index, and all its connecting springs.
+	Updates all springs' point indices after the index shift in mPoints. */
+	void removePoint(size_t aIdx);
+
+	/** Removes the spring at the specified index. */
+	void removeSpring(size_t aIdx);
 };

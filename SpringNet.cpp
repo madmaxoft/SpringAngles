@@ -129,20 +129,18 @@ SpringNet::SpringNet()
 
 
 
-const Point & SpringNet::addPoint(double aX, double aY, bool aIsFixed)
+void SpringNet::addPoint(QPointF aPos, bool aIsFixed)
 {
-	mPoints.emplace_back(aX, aY, aIsFixed);
-	return mPoints.back();
+	mPoints.push_back(std::make_shared<Point>(aPos, aIsFixed));
 }
 
 
 
 
 
-const Spring & SpringNet::addSpring(double aIdealLength, double aForce, size_t aPointIdx1, size_t aPointIdx2)
+void SpringNet::addSpring(double aIdealLength, double aForce, size_t aPointIdx1, size_t aPointIdx2)
 {
-	mSprings.emplace_back(*this, aIdealLength, aForce, aPointIdx1, aPointIdx2);
-	return mSprings.back();
+	mSprings.push_back(std::make_shared<Spring>(*this, aIdealLength, aForce, aPointIdx1, aPointIdx2));
 }
 
 
@@ -157,10 +155,10 @@ size_t SpringNet::nearestPointIdx(QPointF aQueryPt)
 	}
 	auto num = mPoints.size();
 	auto res = 0;
-	auto minDist = Geometry::distanceSquared(mPoints[0], aQueryPt);
+	auto minDist = Geometry::distanceSquared(*mPoints[0], aQueryPt);
 	for (size_t idx = 1; idx < num; ++idx)
 	{
-		auto dist = Geometry::distanceSquared(mPoints[idx], aQueryPt);
+		auto dist = Geometry::distanceSquared(*mPoints[idx], aQueryPt);
 		if (dist < minDist)
 		{
 			minDist = dist;
@@ -180,12 +178,12 @@ size_t SpringNet::nearestSpringIdx(QPointF aQueryPt)
 	{
 		throw std::runtime_error("No springs to query");
 	}
-	auto num = mPoints.size();
+	auto num = mSprings.size();
 	auto res = 0;
-	auto minDist = mSprings[0].distanceSquared(aQueryPt);
+	auto minDist = mSprings[0]->distanceSquared(aQueryPt);
 	for (size_t idx = 1; idx < num; ++idx)
 	{
-		auto dist = mSprings[idx].distanceSquared(aQueryPt);
+		auto dist = mSprings[idx]->distanceSquared(aQueryPt);
 		if (dist < minDist)
 		{
 			minDist = dist;
@@ -216,8 +214,8 @@ void SpringNet::adjust()
 	for (size_t idx = 0; idx < numS; ++idx)
 	{
 		const auto & s = mSprings[idx];
-		springsAtPoints[s.pointIdx1()].push_back(idx);
-		springsAtPoints[s.pointIdx2()].push_back(idx);
+		springsAtPoints[s->pointIdx1()].push_back(idx);
+		springsAtPoints[s->pointIdx2()].push_back(idx);
 	}
 
 	auto newPoints = mPoints;
@@ -225,30 +223,30 @@ void SpringNet::adjust()
 	{
 		auto ptIdx = s.first;
 		const auto & pt = mPoints[ptIdx];
-		if (pt.isFixed())
+		if (pt->isFixed())
 		{
 			continue;
 		}
 
-		double nx = pt.x(), ny = pt.y();
+		double nx = pt->x(), ny = pt->y();
 		for (const auto sIdx: s.second)
 		{
 			const auto & spring = mSprings[sIdx];
-			auto lenDif = spring.idealLength() - spring.currentLength();
+			auto lenDif = spring->idealLength() - spring->currentLength();
 			// For movable points divide the difference between the two points:
-			if (!spring.otherPoint(ptIdx).isFixed())
+			if (!spring->otherPoint(ptIdx).isFixed())
 			{
 				lenDif = lenDif / 2;
 			}
 
-			if (spring.pointIdx1() != ptIdx)
+			if (spring->pointIdx1() != ptIdx)
 			{
 				lenDif = -lenDif;
 			}
-			nx += spring.diffX() * lenDif * spring.force() / spring.idealLength();
-			ny += spring.diffY() * lenDif * spring.force() / spring.idealLength();
+			nx += spring->diffX() * lenDif * spring->force() / spring->idealLength();
+			ny += spring->diffY() * lenDif * spring->force() / spring->idealLength();
 		}
-		newPoints[ptIdx].set(nx, ny);
+		newPoints[ptIdx]->set(nx, ny);
 	}
 	mPoints = newPoints;
 }
@@ -283,10 +281,9 @@ std::pair<SpringNet::ObjectType, size_t> SpringNet::nearestObject(QPointF aScene
 	{
 		return {ObjectType::Point, ptIdx};
 	}
-	auto & pt = mPoints[ptIdx];
-	auto ptDistSq = Geometry::distanceSquared(aScenePos, pt);
+	auto ptDistSq = Geometry::distanceSquared(aScenePos, *mPoints[ptIdx]);
 	auto springIdx = nearestSpringIdx(aScenePos);
-	auto springDistSq = Geometry::distanceSquared(aScenePos, mSprings[springIdx].point1(), mSprings[springIdx].point2());
+	auto springDistSq = Geometry::distanceSquared(aScenePos, mSprings[springIdx]->point1(), mSprings[springIdx]->point2());
 	if (ptDistSq < aSnapDistSq)
 	{
 		return {ObjectType::Point, ptIdx};
@@ -303,4 +300,53 @@ std::pair<SpringNet::ObjectType, size_t> SpringNet::nearestObject(QPointF aScene
 	{
 		return {ObjectType::Point, ptIdx};
 	}
+}
+
+
+
+
+
+
+void SpringNet::removePoint(size_t aIdx)
+{
+	if (aIdx >= mPoints.size())
+	{
+		throw std::runtime_error("Point index out of bounds.");
+	}
+
+	// Remove all springs connected to the point:
+	std::erase_if(mSprings, [aIdx](const SpringPtr & aSpring)
+		{
+			return ((aSpring->pointIdx1() == aIdx) || (aSpring->pointIdx2() == aIdx));
+		}
+	);
+
+	// Shift down all point indices within springs:
+	for (auto & spring: mSprings)
+	{
+		if (spring->pointIdx1() > aIdx)
+		{
+			spring->setPointIdx1(spring->pointIdx1() - 1);
+		}
+		if (spring->pointIdx2() > aIdx)
+		{
+			spring->setPointIdx2(spring->pointIdx2() - 1);
+		}
+	}
+
+	// Remove the point:
+	mPoints.erase(mPoints.begin() + aIdx);
+}
+
+
+
+
+
+void SpringNet::removeSpring(size_t aIdx)
+{
+	if (aIdx >= mSprings.size())
+	{
+		throw std::runtime_error("Spring index out of bounds.");
+	}
+	mSprings.erase(mSprings.begin() + aIdx);
 }

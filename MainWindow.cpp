@@ -105,7 +105,7 @@ MainWindow::MainWindow(QWidget * aParent):
 	connect(mUI->gvMain, &CadGraphicsView::mouseMoved,      this, &MainWindow::gvMouseMoved);
 	connect(mUI->gvMain, &CadGraphicsView::mouseDblClicked, this, &MainWindow::gvMouseDblClicked);
 
-	setCurrentTool(CurrentTool::AddFixedPoint);
+	setCurrentTool(CurrentTool::SelectObject);
 	updateScene();
 }
 
@@ -299,7 +299,9 @@ void MainWindow::zoomOut()
 
 void MainWindow::zoomAll()
 {
-	// TODO
+	auto all = mGraphicsScene->itemsBoundingRect();
+	mUI->gvMain->zoomTo(all);
+	mUI->gvMain->centerOn(all.center());
 }
 
 
@@ -322,17 +324,12 @@ void MainWindow::gvMouseMoved(QPointF aScenePos)
 						updateScene();
 						break;
 					}
+					default: break;
 				}
 			}
 			else
 			{
-				auto nearest = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
-				auto item = itemForObject(nearest);
-				if (item != nullptr)
-				{
-					mGraphicsScene->clearSelection();
-					item->setSelected(true);
-				}
+				selectNearestObject(aScenePos);
 			}
 			break;
 		}
@@ -350,6 +347,11 @@ void MainWindow::gvMouseMoved(QPointF aScenePos)
 				auto length = mNewSpringLine->line().length();
 				mNewSpringLine->setIdealLength(length);
 			}
+			break;
+		}
+		case CurrentTool::RemoveObject:
+		{
+			selectNearestObject(aScenePos);
 			break;
 		}
 		default: break;
@@ -474,7 +476,7 @@ void MainWindow::gvMouseReleasedAddFixedPoint(QPointF aScenePos)
 	{
 		return;
 	}
-	mDocument->springNet().addPoint(coords->x(), coords->y(), true);
+	mDocument->springNet().addPoint(*coords, true);
 	updateScene();
 }
 
@@ -521,7 +523,7 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 		// Add a new point for the spring:
 		auto x = startPoint.x() - diffX * springParams->mIdealLength / len;
 		auto y = startPoint.y() - diffY * springParams->mIdealLength / len;
-		mDocument->springNet().addPoint(x, y, false);
+		mDocument->springNet().addPoint({x, y}, false);
 		endPointIdx = mDocument->springNet().numPoints() - 1;
 	}
 
@@ -541,7 +543,22 @@ void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 
 void MainWindow::gvMouseReleasedRemoveObject(QPointF aScenePos)
 {
-	// TODO
+	auto nearestObj = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
+	switch (nearestObj.first)
+	{
+		case SpringNet::ObjectType::None: return;
+		case SpringNet::ObjectType::Point:
+		{
+			mDocument->springNet().removePoint(nearestObj.second);
+			break;
+		}
+		case SpringNet::ObjectType::Spring:
+		{
+			mDocument->springNet().removeSpring(nearestObj.second);
+			break;
+		}
+	}
+	updateScene();
 }
 
 
@@ -578,18 +595,18 @@ void MainWindow::updateScene()
 	mItemsForSprings.clear();
 	for (const auto & p: mDocument->springNet().points())
 	{
-		auto pt = new GraphicsPointItem(p);
+		auto pt = new GraphicsPointItem(*p);
 		mGraphicsScene->addItem(pt);
 		pt->setFlag(QGraphicsItem::ItemIsSelectable);
 		mItemsForPoints.push_back(pt);
 	}
 	for (const auto & s: mDocument->springNet().springs())
 	{
-		auto x1 = s.point1().x();
-		auto y1 = s.point1().y();
-		auto x2 = s.point2().x();
-		auto y2 = s.point2().y();
-		auto line = new GraphicsSpringItem(x1, y1, x2, y2, s.idealLength());
+		auto x1 = s->point1().x();
+		auto y1 = s->point1().y();
+		auto x2 = s->point2().x();
+		auto y2 = s->point2().y();
+		auto line = new GraphicsSpringItem(x1, y1, x2, y2, s->idealLength());
 		mGraphicsScene->addItem(line);
 		line->setFlag(QGraphicsItem::ItemIsSelectable);
 		mItemsForSprings.push_back(line);
@@ -658,4 +675,19 @@ QGraphicsItem * MainWindow::itemForObject(std::pair<SpringNet::ObjectType, size_
 		case SpringNet::ObjectType::Spring: return itemForSpring(aObjectDef.second);
 	}
 	return nullptr;
+}
+
+
+
+
+
+void MainWindow::selectNearestObject(QPointF aScenePos)
+{
+	auto nearest = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
+	auto item = itemForObject(nearest);
+	if (item != nullptr)
+	{
+		mGraphicsScene->clearSelection();
+		item->setSelected(true);
+	}
 }

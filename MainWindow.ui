@@ -148,7 +148,7 @@
     <string>E&amp;xit</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::QuitRole</enum>
+    <enum>QAction::MenuRole::QuitRole</enum>
    </property>
   </action>
   <action name="actToolAddFixedPoint">
@@ -162,7 +162,7 @@
     <string>Add fixed point</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
   <action name="actToolAddSpring">
@@ -176,7 +176,7 @@
     <string>Add spring</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
   <action name="actToolRemoveObject">
@@ -190,7 +190,7 @@
     <string>Remove object</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
   <action name="actToolSelectObject">
@@ -204,7 +204,7 @@
     <string>Select object</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
   <action name="actZoomIn">
@@ -214,6 +214,9 @@
    <property name="text">
     <string>Zoom &amp;in</string>
    </property>
+   <property name="shortcut">
+    <string>+</string>
+   </property>
   </action>
   <action name="actZoomOut">
    <property name="icon">
@@ -222,6 +225,9 @@
    <property name="text">
     <string>Zoom &amp;out</string>
    </property>
+   <property name="shortcut">
+    <string>-</string>
+   </property>
   </action>
   <action name="actZoomAll">
    <property name="icon">
@@ -229,6 +235,9 @@
    </property>
    <property name="text">
     <string>Zoom &amp;all</string>
+   </property>
+   <property name="shortcut">
+    <string>F4</string>
    </property>
   </action>
   <action name="actAdjust">
@@ -239,7 +248,7 @@
     <string>Adjust</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::TextHeuristicRole</enum>
+    <enum>QAction::MenuRole::TextHeuristicRole</enum>
    </property>
   </action>
  </widget>
