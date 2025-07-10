@@ -126,6 +126,9 @@ private:
 	/** The QGraphicsItem-s representing the springs, in the same order as the springs. */
 	std::vector<QGraphicsItem *> mItemsForSprings;
 
+	/** The object that is currently being manipulated. */
+	std::pair<SpringNet::ObjectType, size_t> mCurrentObject = {SpringNet::ObjectType::None, 0};
+
 
 	/** Connects the actions to their slots in this form. */
 	void connectActions();

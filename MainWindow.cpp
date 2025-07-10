@@ -312,12 +312,27 @@ void MainWindow::gvMouseMoved(QPointF aScenePos)
 	{
 		case CurrentTool::SelectObject:
 		{
-			auto nearest = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
-			auto item = itemForObject(nearest);
-			if (item != nullptr)
+			if (QApplication::mouseButtons() & Qt::LeftButton)
 			{
-				mGraphicsScene->clearSelection();
-				item->setSelected(true);
+				switch (mCurrentObject.first)
+				{
+					case SpringNet::ObjectType::Point:
+					{
+						mDocument->springNet().point(mCurrentObject.second).set(aScenePos);
+						updateScene();
+						break;
+					}
+				}
+			}
+			else
+			{
+				auto nearest = mDocument->springNet().nearestObject(aScenePos, snapThresholdSquared());
+				auto item = itemForObject(nearest);
+				if (item != nullptr)
+				{
+					mGraphicsScene->clearSelection();
+					item->setSelected(true);
+				}
 			}
 			break;
 		}
@@ -354,6 +369,11 @@ void MainWindow::gvMousePressed(QPointF aScenePos, Qt::MouseButton aButton)
 	mMouseDownPos = aScenePos;
 	switch (mCurrentTool)
 	{
+		case CurrentTool::SelectObject:
+		{
+			mCurrentObject = mDocument->springNet().nearestObject(mMouseDownPos, snapThresholdSquared());
+			break;
+		}
 		case CurrentTool::AddSpring:
 		{
 			auto startPtIdx = mDocument->springNet().nearestPointIdx(aScenePos);
@@ -439,7 +459,8 @@ void MainWindow::gvMouseReleased(QPointF aScenePos, Qt::MouseButton aButton)
 
 void MainWindow::gvMouseReleasedSelectObject(QPointF aScenePos)
 {
-	// TODO
+	gvMouseMoved(aScenePos);
+	mCurrentObject = {SpringNet::ObjectType::None, 0};
 }
 
 

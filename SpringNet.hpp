@@ -45,6 +45,12 @@ public:
 		setX(aX);
 		setY(aY);
 	}
+
+	void set(QPointF aCoords)
+	{
+		setX(aCoords.x());
+		setY(aCoords.y());
+	}
 };
 
 
