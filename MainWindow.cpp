@@ -8,7 +8,6 @@
 #include "ui_MainWindow.h"
 #include "PointCoordsDlg.hpp"
 #include "SpringParamsDlg.hpp"
-#include "Geometry.hpp"
 
 
 
@@ -41,11 +40,9 @@ void GraphicsPointItem::paint(
 		p.setWidth(p.width() + 4);
 		p.setColor(QColor::fromRgb(0, 0xff, 0xff));
 		aPainter->setPen(p);
+		aPainter->drawRect(rect());
 	}
-	else
-	{
-		aPainter->setPen(pen());
-	}
+	aPainter->setPen(pen());
 	aPainter->drawRect(rect());
 }
 
@@ -65,20 +62,18 @@ void GraphicsSpringItem::paint(
 	Q_UNUSED(aOption);
 	Q_UNUSED(aWidget);
 
+	auto currentLength = line().length();
+	auto txt = QString("%1 / %2").arg(currentLength).arg(mIdealLength);
 	if (isSelected())
 	{
 		auto p = pen();
-		p.setWidth(p.width() + 4);
+		p.setWidth(p.width() + 3);
 		p.setColor(QColor::fromRgb(0, 0xff, 0xff));
 		aPainter->setPen(p);
+		aPainter->drawLine(line());
 	}
-	else
-	{
-		aPainter->setPen(pen());
-	}
+	aPainter->setPen(pen());
 	aPainter->drawLine(line());
-	auto currentLength = line().length();
-	auto txt = QString("%1 / %2").arg(currentLength).arg(mIdealLength);
 	aPainter->drawText(line().center(), txt);
 }
 
