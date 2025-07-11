@@ -32,6 +32,7 @@ PointCoordsDlg::PointCoordsDlg(QWidget * aParent, QPointF aInitialCoords):
 	mUI->setupUi(this);
 	mUI->eX->setText(QString::number(aInitialCoords.x()));
 	mUI->eY->setText(QString::number(aInitialCoords.y()));
+	mUI->eX->selectAll();
 }
 
 

@@ -1,5 +1,6 @@
 #include "SpringParamsDlg.hpp"
 #include "ui_SpringParamsDlg.h"
+#include "SpringNet.hpp"
 
 
 
@@ -28,7 +29,9 @@ SpringParamsDlg::SpringParamsDlg(QWidget * aParent, double aIdealLength, double 
 {
 	mUI->setupUi(this);
 	mUI->eLength->setText(QString::number(aIdealLength));
+	mUI->eVerticalDifference->setText("0");
 	mUI->eForce->setText(QString::number(aForce));
+	mUI->eLength->selectAll();
 }
 
 
@@ -46,7 +49,9 @@ SpringParamsDlg::~SpringParamsDlg()
 
 double SpringParamsDlg::idealLength() const
 {
-	return mUI->eLength->text().toDouble();
+	auto measuredLength = mUI->eLength->text().toDouble();
+	auto verticalDiff = mUI->eVerticalDifference->text().toDouble();
+	return Spring::projectLengthToFloor(measuredLength, verticalDiff);
 }
 
 
