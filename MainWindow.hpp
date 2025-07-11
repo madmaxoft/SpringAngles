@@ -24,10 +24,14 @@ class GraphicsPointItem:
 {
 	using Super = QGraphicsRectItem;
 
+	/** A fixed point has a different graphics representation. */
+	bool mIsFixed;
+
 
 public:
-	GraphicsPointItem(QPointF aPt):
-		Super(aPt.x() - 1, aPt.y() - 1, 3, 3)
+	GraphicsPointItem(QPointF aPt, bool aIsFixed):
+		Super(aPt.x() - 1, aPt.y() - 1, 3, 3),
+		mIsFixed(aIsFixed)
 	{
 	}
 
@@ -37,6 +41,9 @@ public:
 		const QStyleOptionGraphicsItem * aOption,
 		QWidget * aWidget = nullptr
 	) override;
+
+	/** Paints the raw shape using the current pen / brush. */
+	void paintRaw(QPainter * aPainter);
 };
 
 

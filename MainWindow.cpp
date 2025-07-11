@@ -40,10 +40,26 @@ void GraphicsPointItem::paint(
 		p.setWidth(p.width() + 4);
 		p.setColor(QColor::fromRgb(0, 0xff, 0xff));
 		aPainter->setPen(p);
-		aPainter->drawRect(rect());
+		paintRaw(aPainter);
 	}
 	aPainter->setPen(pen());
-	aPainter->drawRect(rect());
+	paintRaw(aPainter);
+}
+
+
+
+
+
+void GraphicsPointItem::paintRaw(QPainter * aPainter)
+{
+	if (mIsFixed)
+	{
+		aPainter->drawEllipse(rect().adjusted(-5, -5, 5, 5));
+	}
+	else
+	{
+		aPainter->drawRect(rect().adjusted(-5, -5, 5, 5));
+	}
 }
 
 
@@ -591,7 +607,7 @@ void MainWindow::updateScene()
 	mItemsForSprings.clear();
 	for (const auto & p: mDocument->springNet().points())
 	{
-		auto pt = new GraphicsPointItem(*p);
+		auto pt = new GraphicsPointItem(*p, p->isFixed());
 		mGraphicsScene->addItem(pt);
 		pt->setFlag(QGraphicsItem::ItemIsSelectable);
 		mItemsForPoints.push_back(pt);
