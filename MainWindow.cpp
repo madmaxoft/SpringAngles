@@ -481,6 +481,7 @@ void MainWindow::gvMouseReleasedAddFixedPoint(QPointF aScenePos)
 
 void MainWindow::gvMouseReleasedAddSpring(QPointF aScenePos)
 {
+	mNewSpringLine->hide();
 	if (mDocument->springNet().numPoints() == 0)
 	{
 		return;
